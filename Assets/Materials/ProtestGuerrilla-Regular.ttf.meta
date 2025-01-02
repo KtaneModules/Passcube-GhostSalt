@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c5eeec88283783f488f8041f69890606
+guid: f275a7023ae25384b8ebfe74aad3f6ea
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -8,9 +8,9 @@ TrueTypeFontImporter:
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
-  fontName: Minisystem
+  fontName: Protest Guerrilla
   fontNames:
-  - Minisystem
+  - Protest Guerrilla
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
