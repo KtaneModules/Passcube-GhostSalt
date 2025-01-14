@@ -14,6 +14,8 @@ public class PasscubeScript : MonoBehaviour
     public GameObject Cube;
     public KMSelectable[] ArrowSels;
     public KMSelectable[] InputSels;
+    public Flasher[] ArrowFlashers;
+    public Flasher[] InputFlashers;
     public TextMesh[] CubeText;
     public TextMesh ScreenText;
 
@@ -22,6 +24,7 @@ public class PasscubeScript : MonoBehaviour
     private bool _moduleSolved;
 
     private static readonly string[] _wordList = new string[] { "ADVERB", "ATRIUM", "BOWLER", "BRIDAL", "CINEMA", "COMEDY", "DANGER", "DEPUTY", "EDITOR", "EMBRYO", "FIGURE", "FRANCS", "GASPED", "GOALIE", "HARDLY", "HURDLE", "IMPORT", "INCOME", "JACKET", "JUMBLE", "KIDNAP", "KLAXON", "LAWYER", "LENGTH", "MISERY", "MYSELF", "NATURE", "NOTICE", "OCTAVE", "ORANGE", "PLEASE", "POCKET", "QUARTZ", "QUIVER", "RESULT", "REVOTE", "SPIDER", "SWITCH", "TECHNO", "TRANCE", "UNABLE", "USEFUL", "VISAGE", "VORTEX", "WISDOM", "WRITES", "XENIAS", "XYLOSE", "YACHTS", "YIELDS", "ZEBRAS", "ZODIAC" };
+    private const string _alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private readonly Coroutine[] _buttonAnims = new Coroutine[6];
     private bool _isCubeAnimating;
@@ -47,11 +50,11 @@ public class PasscubeScript : MonoBehaviour
 
         GenerateMap();
         _currentPosition = Rnd.Range(0, 26);
-        CubeText[0].text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[_currentPosition].ToString();
+        CubeText[0].text = _alphabet[_currentPosition].ToString();
         for (int i = 0; i < 4; i++)
-            CubeText[i + 1].text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[_map[i][_currentPosition]].ToString();
+            CubeText[i + 1].text = _alphabet[_map[i][_currentPosition]].ToString();
 
-        Debug.LogFormat("[Passcube #{0}] Cube map: {1}", _moduleId, _map.Select(i => i.Select(j => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[j]).Join("")).Join(", "));
+        Debug.LogFormat("[Passcube #{0}] Cube map: {1}", _moduleId, _map.Select(i => i.Select(j => _alphabet[j]).Join("")).Join(", "));
         Debug.LogFormat("[Passcube #{0}] The solution word is {1}.", _moduleId, _solutionWord);
     }
 
@@ -149,7 +152,8 @@ public class PasscubeScript : MonoBehaviour
             if (_buttonAnims[i] != null)
                 StopCoroutine(_buttonAnims[i]);
             _buttonAnims[i] = StartCoroutine(ButtonAnimation(ArrowSels[i].gameObject, true));
-            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, ArrowSels[i].transform);
+            ArrowSels[i].AddInteractionPunch();
             if (_moduleSolved || _isCubeAnimating)
                 return false;
             var oldPos = _currentPosition;
@@ -166,8 +170,7 @@ public class PasscubeScript : MonoBehaviour
             if (_buttonAnims[i] != null)
                 StopCoroutine(_buttonAnims[i]);
             _buttonAnims[i] = StartCoroutine(ButtonAnimation(ArrowSels[i].gameObject, false));
-            if (_moduleSolved)
-                return;
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, ArrowSels[i].transform);
             return;
         };
     }
@@ -179,7 +182,8 @@ public class PasscubeScript : MonoBehaviour
             if (_buttonAnims[i + 4] != null)
                 StopCoroutine(_buttonAnims[i + 4]);
             _buttonAnims[i + 4] = StartCoroutine(ButtonAnimation(InputSels[i].gameObject, true));
-            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, InputSels[i].transform);
+            InputSels[i].AddInteractionPunch();
             if (_moduleSolved)
                 return false;
             if (i == 1)
@@ -191,15 +195,13 @@ public class PasscubeScript : MonoBehaviour
                     return false;
                 }
                 _inSubmissionMode = true;
-                _input += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[_currentPosition].ToString();
+                _input += _alphabet[_currentPosition].ToString();
                 ScreenText.text = _input;
             }
             else
             {
-                _input = "";
-                ScreenText.text = "";
+                _input = ScreenText.text = "";
                 _inSubmissionMode = false;
-                return false;
             }
             return false;
         };
@@ -212,8 +214,7 @@ public class PasscubeScript : MonoBehaviour
             if (_buttonAnims[i + 4] != null)
                 StopCoroutine(_buttonAnims[i + 4]);
             _buttonAnims[i + 4] = StartCoroutine(ButtonAnimation(InputSels[i].gameObject, false));
-            if (_moduleSolved)
-                return;
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, InputSels[i].transform);
             return;
         };
     }
@@ -238,18 +239,19 @@ public class PasscubeScript : MonoBehaviour
         _isCubeAnimating = true;
         if (_inSubmissionMode)
         {
-            _input += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[newPos].ToString();
+            _input += _alphabet[newPos].ToString();
             ScreenText.text = _input;
         }
+        Audio.PlaySoundAtTransform("rotate", Cube.transform);
+        ArrowFlashers[dir].StartFlashing();
 
         var duration = 0.4f;
         var elapsed = 0f;
 
-        var curPos = Cube.transform.localEulerAngles;
-        var goal = new Vector3((dir + 1) % 2 * (dir - 1) * 45, 0, dir % 2 * (2 - dir) * 45);
+        var goal = new[] { Vector3.left, Vector3.forward, Vector3.right, Vector3.back }[dir] * 90;
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Mathf.Lerp(0, goal.x, elapsed / duration), 0, Mathf.Lerp(0, goal.z, elapsed / duration));
+            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed, 0, goal.x * 2, duration * 2), 0, Easing.OutSine(elapsed, 0, goal.z * 2, duration * 2));
             for (int i = 0; i < 5; i++)
                 if (i != dir + 1)
                     CubeText[i].color = new Color32(255, 255, 135, (byte)Mathf.Lerp(255, 0, elapsed / duration));
@@ -257,24 +259,27 @@ public class PasscubeScript : MonoBehaviour
             elapsed += Time.deltaTime;
         }
 
-        CubeText[0].text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[newPos].ToString();
+        CubeText[0].text = _alphabet[newPos].ToString();
         for (int i = 0; i < 4; i++)
-            CubeText[i + 1].text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[_map[i][newPos]].ToString();
+            CubeText[i + 1].text = _alphabet[_map[i][newPos]].ToString();
 
         for (int i = 0; i < 5; i++)
             CubeText[i].color = new Color32(255, 255, 135, (byte)(i == 0 ? 255 : 0));
 
         elapsed = 0f;
-        var start = new Vector3((dir + 1) % 2 * (1 - dir) * 45, 0, dir % 2 * (dir - 2) * 45);
+
+        Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(1f, 0, goal.x * 2, 2f), 0, Easing.OutSine(1f, 0, goal.z * 2, 2f));
+        var start = Cube.transform.localEulerAngles + (new[] { Vector3.right, Vector3.back, Vector3.left, Vector3.forward }[dir] * 90);
+
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Mathf.Lerp(start.x, 0, elapsed / duration), 0, Mathf.Lerp(start.z, 0, elapsed / duration));
+            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed + duration, start.x * 2, 0, duration * 2), 0, Easing.OutSine(elapsed + duration, start.z * 2, 0, duration * 2));
             for (int i = 1; i < 5; i++)
                 CubeText[i].color = new Color32(255, 255, 135, (byte)Mathf.Lerp(0, 255, elapsed / duration));
             yield return null;
             elapsed += Time.deltaTime;
         }
-        Cube.transform.localEulerAngles = new Vector3(0, 0, 0);
+        Cube.transform.localEulerAngles = Vector3.zero;
         for (int i = 0; i < 5; i++)
             CubeText[i].color = new Color32(255, 255, 135, 255);
         if (_inSubmissionMode)
@@ -301,6 +306,7 @@ public class PasscubeScript : MonoBehaviour
                 }
             }
         }
+        ArrowFlashers[dir].StopFlashing();
         _isCubeAnimating = false;
     }
 
