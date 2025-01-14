@@ -714,6 +714,56 @@ Prefab:
       propertyPath: ArrowFlashers.Array.data[3]
       value: 
       objectReference: {fileID: 1971811819}
+    - target: {fileID: 102548698768498206, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_FontSize
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 102137187775994682, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_FontSize
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 102167010625118244, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_FontSize
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 102547121843237790, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_FontSize
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 102349079372101964, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_FontSize
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 102548698768498206, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_CharacterSize
+      value: 0.0375
+      objectReference: {fileID: 0}
+    - target: {fileID: 102137187775994682, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_CharacterSize
+      value: 0.0375
+      objectReference: {fileID: 0}
+    - target: {fileID: 102167010625118244, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_CharacterSize
+      value: 0.0375
+      objectReference: {fileID: 0}
+    - target: {fileID: 102547121843237790, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_CharacterSize
+      value: 0.0375
+      objectReference: {fileID: 0}
+    - target: {fileID: 102349079372101964, guid: 91078d92430daa34d96ee03bdde269eb,
+        type: 2}
+      propertyPath: m_CharacterSize
+      value: 0.0375
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 91078d92430daa34d96ee03bdde269eb, type: 2}
   m_IsPrefabParent: 0

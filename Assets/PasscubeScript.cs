@@ -249,14 +249,18 @@ public class PasscubeScript : MonoBehaviour
 
         var duration = 0.25f;
         var elapsed = 0f;
+        var glitchVariance = 0.05f;
 
         var goal = new Vector3((dir + 1) % 2 * (dir - 1) * 45, 0, dir % 2 * (2 - dir) * 45);
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Easing.InSine(elapsed, 0, goal.x, duration), 0, Easing.InSine(elapsed, 0, goal.z, duration));
+            Cube.transform.localEulerAngles = new Vector3(Easing.InQuad(elapsed, 0, goal.x, duration), 0, Easing.InQuad(elapsed, 0, goal.z, duration));
             for (int i = 0; i < 5; i++)
                 if (i != dir + 1)
+                {
                     _textColorBases[i] = (byte)Mathf.Lerp(255, 0, elapsed / duration);
+                    CubeText[i].GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(Easing.InSine(elapsed, 0, Rnd.Range((elapsed / duration) - 1, 1 - (elapsed / duration)) * glitchVariance, duration), Easing.InSine(elapsed, 0, Rnd.Range((elapsed / duration) - 1, 1 - (elapsed / duration)) * glitchVariance, duration)));
+                }
             yield return null;
             elapsed += Time.deltaTime;
         }
@@ -274,15 +278,22 @@ public class PasscubeScript : MonoBehaviour
         // if (curPos.z > 90) curPos.z -= 360f;
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed, start.x, 0, duration), 0, Easing.OutSine(elapsed, start.z, 0, duration));
+            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed, start.x, 0, duration), 0, Easing.OutQuad(elapsed, start.z, 0, duration));
+            CubeText[0].GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", Vector2.one);
             for (int i = 1; i < 5; i++)
+            {
                 _textColorBases[i] = (byte)Mathf.Lerp(0, 255, elapsed / duration);
+                CubeText[i].GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", new Vector2(Easing.OutExpo(elapsed, 0, Rnd.Range((elapsed / duration) - 1, 1 - (elapsed / duration)) * glitchVariance, duration), Easing.OutExpo(elapsed, 0, Rnd.Range((elapsed / duration) - 1, 1 - (elapsed / duration)) * glitchVariance, duration)));
+            }
             yield return null;
             elapsed += Time.deltaTime;
         }
         Cube.transform.localEulerAngles = new Vector3(0, 0, 0);
         for (int i = 0; i < 5; i++)
+        {
             _textColorBases[i] = 255;
+            CubeText[i].GetComponent<MeshRenderer>().material.SetTextureOffset("_MainTex", Vector2.one);
+        }
         if (_inSubmissionMode)
         {
             if (_input.Length == 6)
@@ -310,22 +321,40 @@ public class PasscubeScript : MonoBehaviour
         _isCubeAnimating = false;
     }
 
+    //private IEnumerator FlickerLetters()
+    //{
+    //    while (true)
+    //    {
+    //        var duration = 0.1f;
+    //        var elapsed = 0f;
+    //        var rands = Enumerable.Range(0, 5).Select(i => Rnd.Range(-75, 30)).ToArray();
+    //        while (elapsed < duration)
+    //        {
+    //            var c = Enumerable.Range(0, 5).Select(i => CubeText[i].color.a * 255).ToArray();
+    //            for (int i = 0; i < 5; i++)
+    //            {
+    //                var x = rands[i] + _textColorBases[i];
+    //                var b = (byte)(x > 255 ? 255 : x < 0 ? 0 : x);
+    //                CubeText[i].color = new Color32((byte)(_moduleSolved ? 0 : 255), 255, (byte)(_moduleSolved ? 100 : 135), (byte)Mathf.Lerp(c[i], b, elapsed / duration));
+    //            }
+    //            yield return null;
+    //            elapsed += Time.deltaTime;
+    //        }
+    //    }
+    //}
+
     private IEnumerator FlickerLetters()
     {
         while (true)
         {
             var duration = 0.1f;
             var elapsed = 0f;
-            var rands = Enumerable.Range(0, 5).Select(i => Rnd.Range(-75, 30)).ToArray();
+            var rands = Enumerable.Range(0, 5).Select(i => Rnd.Range(30, 70)).ToArray();
+
             while (elapsed < duration)
             {
-                var c = Enumerable.Range(0, 5).Select(i => CubeText[i].color.a * 255).ToArray();
                 for (int i = 0; i < 5; i++)
-                {
-                    var x = rands[i] + _textColorBases[i];
-                    var b = (byte)(x > 255 ? 255 : x < 0 ? 0 : x);
-                    CubeText[i].color = new Color32((byte)(_moduleSolved ? 0 : 255), 255, (byte)(_moduleSolved ? 100 : 135), (byte)Mathf.Lerp(c[i], b, elapsed / duration));
-                }
+                    CubeText[i].color = new Color32((byte)(_moduleSolved ? 0 : 255), 255, (byte)(_moduleSolved ? 100 : 135), (byte)Mathf.Max(0, _textColorBases[i] - rands[i] - (Rnd.Range(0, 20) == 0 ? 50 : 0)));
                 yield return null;
                 elapsed += Time.deltaTime;
             }
