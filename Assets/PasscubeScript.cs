@@ -17,7 +17,8 @@ public class PasscubeScript : MonoBehaviour
     public Flasher[] ArrowFlashers;
     public Flasher[] InputFlashers;
     public TextMesh[] CubeText;
-    public TextMesh ScreenText;
+    public AnswerSlot[] AnswerSlots;
+    public Transform DisplayTransform;
 
     private int _moduleId;
     private static int _moduleIdCounter = 1;
@@ -147,6 +148,19 @@ public class PasscubeScript : MonoBehaviour
         return path.ToArray();
     }
 
+    private void SetSlots(string input)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            if (i > input.Length - 1)
+                AnswerSlots[i].TravelToLocation(26);
+            else
+                AnswerSlots[i].TravelToLocation(_alphabet.IndexOf(input[i]));
+        }
+
+        Audio.PlaySoundAtTransform("slot", DisplayTransform);
+    }
+
     private KMSelectable.OnInteractHandler ArrowPress(int i)
     {
         return delegate ()
@@ -188,6 +202,7 @@ public class PasscubeScript : MonoBehaviour
             InputSels[i].AddInteractionPunch();
             if (_moduleSolved)
                 return false;
+            InputFlashers[i].BriefFlash();
             if (i == 1)
             {
                 if (_inSubmissionMode)
@@ -196,13 +211,16 @@ public class PasscubeScript : MonoBehaviour
                     Module.HandleStrike();
                     return false;
                 }
+                Audio.PlaySoundAtTransform("ready", Cube.transform);
                 _inSubmissionMode = true;
                 _input += _alphabet[_currentPosition].ToString();
-                ScreenText.text = _input;
+                SetSlots(_input);
             }
             else
             {
-                _input = ScreenText.text = "";
+                Audio.PlaySoundAtTransform("reset", Cube.transform);
+                _input = "";
+                SetSlots(_input);
                 _inSubmissionMode = false;
             }
             return false;
@@ -242,7 +260,7 @@ public class PasscubeScript : MonoBehaviour
         if (_inSubmissionMode)
         {
             _input += _alphabet[newPos].ToString();
-            ScreenText.text = _input;
+            SetSlots(_input);
         }
         Audio.PlaySoundAtTransform("rotate", Cube.transform);
         ArrowFlashers[dir].StartFlashing();
@@ -303,15 +321,18 @@ public class PasscubeScript : MonoBehaviour
                     Debug.LogFormat("[Passcube #{0}] Correctly submitted {1}. Module solved.", _moduleId, _solutionWord);
                     _moduleSolved = true;
                     Module.HandlePass();
+                    Audio.PlaySoundAtTransform("solve", Cube.transform);
                     ArrowFlashers[dir].StopFlashing();
-                    ScreenText.color = new Color32(0, 255, 100, 255);
+                    for (int i = 0; i < 6; i++)
+                        AnswerSlots[i].FadeColourTo(new Color32(0, 255, 100, 255));
+                    SetSlots("SOLVED");
                     yield break;
                 }
                 else
                 {
                     Debug.LogFormat("[Passcube #{0}] Incorrectly submitted {1}. Strike.", _moduleId, _input);
-                    ScreenText.text = "";
                     _input = "";
+                    SetSlots(_input);
                     _inSubmissionMode = false;
                     Module.HandleStrike();
                 }
@@ -320,28 +341,6 @@ public class PasscubeScript : MonoBehaviour
         ArrowFlashers[dir].StopFlashing();
         _isCubeAnimating = false;
     }
-
-    //private IEnumerator FlickerLetters()
-    //{
-    //    while (true)
-    //    {
-    //        var duration = 0.1f;
-    //        var elapsed = 0f;
-    //        var rands = Enumerable.Range(0, 5).Select(i => Rnd.Range(-75, 30)).ToArray();
-    //        while (elapsed < duration)
-    //        {
-    //            var c = Enumerable.Range(0, 5).Select(i => CubeText[i].color.a * 255).ToArray();
-    //            for (int i = 0; i < 5; i++)
-    //            {
-    //                var x = rands[i] + _textColorBases[i];
-    //                var b = (byte)(x > 255 ? 255 : x < 0 ? 0 : x);
-    //                CubeText[i].color = new Color32((byte)(_moduleSolved ? 0 : 255), 255, (byte)(_moduleSolved ? 100 : 135), (byte)Mathf.Lerp(c[i], b, elapsed / duration));
-    //            }
-    //            yield return null;
-    //            elapsed += Time.deltaTime;
-    //        }
-    //    }
-    //}
 
     private IEnumerator FlickerLetters()
     {

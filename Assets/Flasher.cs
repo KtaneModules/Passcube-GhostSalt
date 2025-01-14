@@ -7,6 +7,7 @@ public class Flasher : MonoBehaviour
     public SpriteRenderer[] Sprites;
 
     private Coroutine _flashCoroutine;
+    private Coroutine _briefFlashCoroutine;
 
     // Use this for initialization
     void Start()
@@ -28,7 +29,7 @@ public class Flasher : MonoBehaviour
         ResetAllSprites();
     }
 
-    private IEnumerator Flash(float holdDur = 0.1f, float interval = 0.05f)
+    private IEnumerator Flash(float holdDur = 0.075f, float interval = 0.035f)
     {
         while (true)
             for (int i = 0; i < Sprites.Length; i++)
@@ -49,5 +50,21 @@ public class Flasher : MonoBehaviour
     {
         for (int i = 0; i < Sprites.Length; i++)
             SetSprite(i, false);
+    }
+
+    public void BriefFlash()
+    {
+        if (_briefFlashCoroutine != null)
+            StopCoroutine(_briefFlashCoroutine);
+        _briefFlashCoroutine = StartCoroutine(HandleBriefFlash());
+    }
+
+    private IEnumerator HandleBriefFlash()
+    {
+        StartFlashing();
+
+        yield return new WaitForSeconds(0.35f);
+
+        StopFlashing();
     }
 }
