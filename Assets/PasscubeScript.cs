@@ -33,6 +33,7 @@ public class PasscubeScript : MonoBehaviour
     private int _currentPosition;
     private bool _inSubmissionMode;
     private string _input = "";
+    private int[] _textColorBases = new int[] { 255, 255, 255, 255, 255 };
 
     private void Start()
     {
@@ -54,7 +55,7 @@ public class PasscubeScript : MonoBehaviour
         for (int i = 0; i < 4; i++)
             CubeText[i + 1].text = _alphabet[_map[i][_currentPosition]].ToString();
 
-        Debug.LogFormat("[Passcube #{0}] Cube map: {1}", _moduleId, _map.Select(i => i.Select(j => _alphabet[j]).Join("")).Join(", "));
+        Debug.LogFormat("[Passcube #{0}] Letter map: {1}", _moduleId, _map.Select(i => i.Select(j => _alphabet[j]).Join("")).Join(", "));
         Debug.LogFormat("[Passcube #{0}] The solution word is {1}.", _moduleId, _solutionWord);
     }
 
@@ -96,6 +97,7 @@ public class PasscubeScript : MonoBehaviour
 
         _solutionWord = list[0];
         _map = map.ToArray();
+        StartCoroutine(FlickerLetters());
     }
 
     struct QueueItem
@@ -158,7 +160,7 @@ public class PasscubeScript : MonoBehaviour
                 return false;
             var oldPos = _currentPosition;
             _currentPosition = _map[i][oldPos];
-            StartCoroutine(RotateCube(oldPos, _currentPosition, i));
+            StartCoroutine(RotateCube(_currentPosition, i));
             return false;
         };
     }
@@ -234,7 +236,7 @@ public class PasscubeScript : MonoBehaviour
         obj.transform.localPosition = new Vector3(pos.x, goal, pos.z);
     }
 
-    private IEnumerator RotateCube(int oldPos, int newPos, int dir)
+    private IEnumerator RotateCube(int newPos, int dir)
     {
         _isCubeAnimating = true;
         if (_inSubmissionMode)
@@ -245,16 +247,16 @@ public class PasscubeScript : MonoBehaviour
         Audio.PlaySoundAtTransform("rotate", Cube.transform);
         ArrowFlashers[dir].StartFlashing();
 
-        var duration = 0.4f;
+        var duration = 0.25f;
         var elapsed = 0f;
 
-        var goal = new[] { Vector3.left, Vector3.forward, Vector3.right, Vector3.back }[dir] * 90;
+        var goal = new Vector3((dir + 1) % 2 * (dir - 1) * 45, 0, dir % 2 * (2 - dir) * 45);
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed, 0, goal.x * 2, duration * 2), 0, Easing.OutSine(elapsed, 0, goal.z * 2, duration * 2));
+            Cube.transform.localEulerAngles = new Vector3(Easing.InSine(elapsed, 0, goal.x, duration), 0, Easing.InSine(elapsed, 0, goal.z, duration));
             for (int i = 0; i < 5; i++)
                 if (i != dir + 1)
-                    CubeText[i].color = new Color32(255, 255, 135, (byte)Mathf.Lerp(255, 0, elapsed / duration));
+                    _textColorBases[i] = (byte)Mathf.Lerp(255, 0, elapsed / duration);
             yield return null;
             elapsed += Time.deltaTime;
         }
@@ -264,24 +266,23 @@ public class PasscubeScript : MonoBehaviour
             CubeText[i + 1].text = _alphabet[_map[i][newPos]].ToString();
 
         for (int i = 0; i < 5; i++)
-            CubeText[i].color = new Color32(255, 255, 135, (byte)(i == 0 ? 255 : 0));
-
+            _textColorBases[i] = (byte)(i == 0 ? 255 : 0);
         elapsed = 0f;
-
-        Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(1f, 0, goal.x * 2, 2f), 0, Easing.OutSine(1f, 0, goal.z * 2, 2f));
-        var start = Cube.transform.localEulerAngles + (new[] { Vector3.right, Vector3.back, Vector3.left, Vector3.forward }[dir] * 90);
-
+        var start = new Vector3((dir + 1) % 2 * (1 - dir) * 45, 0, dir % 2 * (dir - 2) * 45);
+        var curPos = Cube.transform.localEulerAngles;
+        // if (curPos.x > 90) curPos.x -= 360f;
+        // if (curPos.z > 90) curPos.z -= 360f;
         while (elapsed < duration)
         {
-            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed + duration, start.x * 2, 0, duration * 2), 0, Easing.OutSine(elapsed + duration, start.z * 2, 0, duration * 2));
+            Cube.transform.localEulerAngles = new Vector3(Easing.OutSine(elapsed, start.x, 0, duration), 0, Easing.OutSine(elapsed, start.z, 0, duration));
             for (int i = 1; i < 5; i++)
-                CubeText[i].color = new Color32(255, 255, 135, (byte)Mathf.Lerp(0, 255, elapsed / duration));
+                _textColorBases[i] = (byte)Mathf.Lerp(0, 255, elapsed / duration);
             yield return null;
             elapsed += Time.deltaTime;
         }
-        Cube.transform.localEulerAngles = Vector3.zero;
+        Cube.transform.localEulerAngles = new Vector3(0, 0, 0);
         for (int i = 0; i < 5; i++)
-            CubeText[i].color = new Color32(255, 255, 135, 255);
+            _textColorBases[i] = 255;
         if (_inSubmissionMode)
         {
             if (_input.Length == 6)
@@ -291,9 +292,8 @@ public class PasscubeScript : MonoBehaviour
                     Debug.LogFormat("[Passcube #{0}] Correctly submitted {1}. Module solved.", _moduleId, _solutionWord);
                     _moduleSolved = true;
                     Module.HandlePass();
+                    ArrowFlashers[dir].StopFlashing();
                     ScreenText.color = new Color32(0, 255, 100, 255);
-                    for (int i = 0; i < 5; i++)
-                        CubeText[i].color = new Color32(0, 255, 100, 255);
                     yield break;
                 }
                 else
@@ -308,6 +308,28 @@ public class PasscubeScript : MonoBehaviour
         }
         ArrowFlashers[dir].StopFlashing();
         _isCubeAnimating = false;
+    }
+
+    private IEnumerator FlickerLetters()
+    {
+        while (true)
+        {
+            var duration = 0.1f;
+            var elapsed = 0f;
+            var rands = Enumerable.Range(0, 5).Select(i => Rnd.Range(-75, 30)).ToArray();
+            while (elapsed < duration)
+            {
+                var c = Enumerable.Range(0, 5).Select(i => CubeText[i].color.a * 255).ToArray();
+                for (int i = 0; i < 5; i++)
+                {
+                    var x = rands[i] + _textColorBases[i];
+                    var b = (byte)(x > 255 ? 255 : x < 0 ? 0 : x);
+                    CubeText[i].color = new Color32((byte)(_moduleSolved ? 0 : 255), 255, (byte)(_moduleSolved ? 100 : 135), (byte)Mathf.Lerp(c[i], b, elapsed / duration));
+                }
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+        }
     }
 
 #pragma warning disable 0414
