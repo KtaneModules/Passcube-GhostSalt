@@ -24,7 +24,7 @@ public class PasscubeScript : MonoBehaviour
     private static int _moduleIdCounter = 1;
     private bool _moduleSolved;
 
-    private static readonly string[] _wordList = new string[] { "ADVERB", "ATRIUM", "BOWLER", "BRIDAL", "CINEMA", "COMEDY", "DANGER", "DEPUTY", "EDITOR", "EMBRYO", "FIGURE", "FRANCS", "GASPED", "GOALIE", "HARDLY", "HURDLE", "IMPORT", "INCOME", "JACKET", "JUMBLE", "KIDNAP", "KLAXON", "LAWYER", "LENGTH", "MISERY", "MYSELF", "NATURE", "NOTICE", "OCTAVE", "ORANGE", "PLEASE", "POCKET", "QUARTZ", "QUIVER", "RESULT", "REVOTE", "SPIDER", "SWITCH", "TECHNO", "TRANCE", "UNABLE", "USEFUL", "VISAGE", "VORTEX", "WISDOM", "WRITES", "XENIAS", "XYLOSE", "YACHTS", "YIELDS", "ZEBRAS", "ZODIAC" };
+    private static readonly string[] _wordList = new string[] { "ADVERB", "ATRIUM", "BOWLER", "BRIDAL", "CINEMA", "COMEDY", "DANGER", "DEPUTY", "EDITOR", "EMBRYO", "FIGURE", "FRANCS", "GASPED", "GOALIE", "HARDLY", "HURDLE", "IMPORT", "INCOME", "JACKET", "JUMBLE", "KIDNAP", "KLAXON", "LAWYER", "LENGTH", "MISERY", "MYSELF", "NATURE", "NOTICE", "OCTAVE", "ORANGE", "PARSEC", "POCKET", "QUARTZ", "QUIVER", "RESULT", "REVOTE", "SPIDER", "SWITCH", "TECHNO", "TRANCE", "UNABLE", "USEFUL", "VISAGE", "VORTEX", "WISDOM", "WRITES", "XENIAS", "XYLOSE", "YACHTS", "YIELDS", "ZEBRAS", "ZODIAC" };
     private const string _alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private readonly Coroutine[] _buttonAnims = new Coroutine[6];
@@ -50,6 +50,7 @@ public class PasscubeScript : MonoBehaviour
             InputSels[i].OnInteractEnded += InputRelease(i);
         }
 
+        StartCoroutine(FlickerLetters());
         GenerateMap();
         _currentPosition = Rnd.Range(0, 26);
         CubeText[0].text = _alphabet[_currentPosition].ToString();
@@ -98,7 +99,6 @@ public class PasscubeScript : MonoBehaviour
 
         _solutionWord = list[0];
         _map = map.ToArray();
-        StartCoroutine(FlickerLetters());
     }
 
     struct QueueItem

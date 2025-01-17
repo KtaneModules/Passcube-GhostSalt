@@ -14,7 +14,9 @@ MonoBehaviour:
   id: PasscubeModule
   title: Passcube
   author: Quinn Wuest & GhostSalt
-  description: Passcube
-  version: 
+  description: "It got rejected from being a Boggle cube. Now it\u2019s plotting its
+    revenge.\r\n\r\nMade by Quinn Wuest & GhostSalt\r\n\r\n[url=https://ktane.timwi.de/HTML/Passcube.html]Manual
+    HTML[/url]\r\n[url=https://ktane.timwi.de/PDF/Passcube.pdf]Manual PDF[/url]"
+  version: 1.0
   outputFolder: build
-  previewImage: {fileID: 0}
+  previewImage: {fileID: 2800000, guid: 03e6672eeb866ce47b04a8281e33562b, type: 3}
